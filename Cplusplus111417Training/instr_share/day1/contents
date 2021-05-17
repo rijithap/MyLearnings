@@ -1,0 +1,420 @@
+//Traditional approach - 'C' or C++98
+
+//Data-type of a variable is explicitly stated....
+int a;
+int b = 10;
+
+**********************************************
+
+int a;
+float b;
+double c;
+
+//...
+
+float d = a+b*c;  //side effect, if 'd's type is not modified from 'float' to 'double'
+-----------------------------------------
+//  WITH TYPE-INFERENCE 'auto'
+int a;
+float b;
+float c;
+
+//...
+
+auto d = a+b*c;  //now automatically the compiler at this stage would infer or decide the data-type of 'd' as FLOAT
+
+***********************
+//NOW THE CODE UPON RE-FACTORING....
+int a;
+float b;
+double c;     //float c;
+
+//...
+
+auto d = a+b*c;  //now automatically the compiler at this stage would infer or decide the data-type of 'd' as DOUBLE
+
+//IT ALSO LEAD'S TO A MORE CONCISE CODE....
+
+
+list<int> ls1;
+//...
+
+//we want to iterate the list container...by using the iterator object - C++98 standards...
+list<int>::iterator itr = ls1.begin();
+
+
+//we want to iterate the list container...by using the iterator object - C++11 standards...(TYPE-INFERENCE)
+auto itr = ls1.begin();
+
+*****************************************
+for(list<int>::iterator itr = ls1.begin(); itr != ls1.end(); itr++)
+{
+  //...
+}
+
+//with typeinference
+ list<int> ls1;  //will work
+     (or) 
+ list<float> ls1;  //refactored 
+
+for(auto itr = ls1.begin(); itr != ls1.end(); itr++) //will still work, it will re-calibrate the type 
+{
+  //...
+}
+********************************
+
+float fun();
+
+
+auto d = fun();   //compiler will transform this statement as -->  float d = fun();
+
+//****
+
+float fun(){...}
+
+
+------------------------------------------------
+template<typename T> class list
+{
+private:
+   T data;
+   //...
+};
+
+//compiler resolution....
+class list
+{
+private:
+   auto data;
+   //...
+};
+
+list<auto> ls1 = {.....};  //should be an issue....
+
+-----------------------------------------------------------------------
+
+shared_ptr<int> fun(){...}
+
+
+shared_ptr<int> ptr = fun();
+    (or)
+auto ptr = fun();
+-----------------------------
+MINIMUM PRE-REQUISITE FOR MAKING USE OF 'auto' keyword
+
+auto a;        //error
+auto a = 100;  //ok - must & should be initialized.... [being initialized with a direct-value]
+*****************************
+
+int fun(){...}
+
+auto b; //error
+auto b = fun();  // ok - it is being initialized with a function call's return value
+---------------------------
+With type inference there are 2 things happening....
+  1. Resolve the elements data type and
+  2. Also initialize the element.
+ -------------------------
+ 
+ auto a = 100, b= 200;   //ok for all elements are of type 'int'
+ 
+auto a = 100, b = 45.12f;  // ---> int a=100, b=45.12f;  //warning or error....
+
+
+*******************************
+auto x = 100;         // int x = 100
+const auto x = 100;   // const int x =100;  
+
+------------------------------------------------------------------------------------
+With type-inference 'auto' the extended qualifiers like 'const' & 'volatile' will be ignored....
+
+const int x = 100;   // 'x' is a const int
+
+auto y = x;      // 'y' will be treated as 'int' & not as 'const int'   ---> int y = x;
+******************************
+
+volatile int y = 100;   // 'y' is 'volatile int'
+
+auto z = y;   // int z = y;   --> The 'volatile' qualifier will ge ignored...
+
+**************************************************************
+
+int a = 100;
+int& ref = a;   // 'ref' is now another name for 'a'
+
+
+  int
+   a
+|------|
+| 100  |  ref
+|------|
+************************************************
+const int a = 100;
+auto& ref = a;   // 'ref' is now another name for 'a'
+
+
+ const int
+   a
+|------|
+| 100  |  ref
+|------|
+
+  Since 'a' is const int, so shall be 'ref' const int
+  ***************************************************************************
+  int a[10];   // 'a's data-type is not 'int' rather 'int *'
+  
+  cout << a;   //will print starting address of the array...
+  
+  a[0]  ===>  *(a+0);
+  
+  
+  auto b = a;   // now will be of type 'int *'
+  
+-----------------------------------------------------------------
+int fun(double x){...}
+
+//approach-1
+auto result = fun(45.12);
+
+//approach-2
+auto callfun = fun;               //  ====> int(*callfun)(double) = &fun;
+auto result = (*callfun)(45.12);
+
+
+//approach-3
+
+auto& callfun = fun;         // ===>   int(&callfun)(double) = fun;
+auto result = callfun(45.12);
+
+------------------------------------------------
+decltype - type inference construct....
+
+//unlike 'auto' with 'decltype' type-inference construct, it is not compulsory to initalize the variable....
+
+auto x;      //error
+auto x=100;  //ok
+
+Now, with decltype
+
+int a;
+auto b= 100;
+//..
+
+decltype(a) x;    // int x;
+decltype(b) y;    // int y;   // The value of 'b' will not be provided to 'y'
+
+decltype(b) z=200;
+*************************************
+//unline 'auto' which ignores the extended qualifiers like 'const', 'volatile' etc.. The 'decltype' considers
+// the extended qualifier's without ignoring them.
+
+const int b =100;
+
+decltype(b) c;       // const int c;    --> error
+**************************************************************************
+int x = 100;
+
+  int
+   x
+|------|
+| 100  |  
+|------|
+
+decltype(x) y1{};
+
+  int
+   y1
+|------|
+| 0    |  
+|------|
+********************************************************
+int x = 100;
+
+decltype((x)) y1;   // ==> int& y1;   //error    --->  (x)  means 'int'   ((x)) means  'int&' , 
+
+decltype((x)) y1{x}; // ok   ==> int& y1 = x;
+
+  int
+   x
+|------|
+| 100  |  y1
+|------|
+---------------------------------------------------
+LAMBDA's OR ANAYMOUS FUNCTIONS.
+  - These functions do not have any name or identity.
+  - These nameless functions can also be defined inside of another function.
+  
+  []()
+  {
+    //....
+  };
+  ---------------------
+  
+  void fun()
+  {
+     int a,b,c;  
+     
+     [=]()    //all by value
+     {
+         //..   
+     };
+  
+     [a,b,c]()    //all by value
+     {
+         //..   
+     };
+     
+     [](int x)
+     {
+       //..
+     };
+  }
+  
+  void fun2(int x=10)
+  {...}
+
+void fun3(int, int);
+
+
+void fun3(int x, int y)
+{
+  //..
+}
+----------------------------------
+
+void fun1(int x, int y)
+{
+  //..
+}
+
+int main()
+{
+   int x, y;
+   
+   fun1(x,y);
+   
+}
+--------------------------------------------
+
+void Add(int a, int b)    //CALLED
+{
+  //..
+}
+
+int main()              //CALLEE or CALLER
+{
+  //...
+  Add(10,20);
+  //...
+  return 0;
+}
+
+-----------------------STACK AREA of the process--------------------------
+
+|  10 |        <--sp
+|  20 |
+|-----|        <--bp
+| 500 |        
+|-----| [500]  
+ 'main'
+----------------------------------------------------
+
+PROLOG : Setting up the function stack, pushing in all formal parameters of the function if any and initializing the base pointer and stack pointer accordingly.
+
+BUSINESS-LOGIC : Execution of statements inside the function body as determined by the programmer.
+
+EPILOG : Pop all the elements in the function and reset the stack pointers to point to the CALLEE stack-frame
+
+|  10*|        
+|  20*|    
+|-----|        
+| 500*|        <--sp
+|-----| [500]  <--bp
+ 'main'
+
+-----------------------------------------------------
+PROLOG  - 3ms
+B.LOGIC - 2ms
+EPILOG  - 3ms
+
+
+inline void Add(int a, int b)
+{...}
+
+-----------------------------------------------------
+class Func   //FUNCTION CLASS
+{
+private:
+   void(*fp)();
+public:
+   Func(void(*ff)()):fp(ff)
+   { }
+   
+};
+
+void fun1(){...}
+void fun2(){...}
+
+//Each object of 'Func' class hold a handle to a global function, Such objects are called FUNCTION OBJECTS.
+Func fobj1(&fun1);
+Func fobj2(&fun2);
+
+*******************************************************************
+class Func   //FUNCTION CLASS
+{
+private:
+   void(*fp)();
+public:
+   Func(void(*ff)()):fp(ff)
+   { }
+   void call()
+   {
+     (*fp)();
+   }
+   //FUNCTORS - Overloading of function operator....
+   void operator()()
+   {
+   //....
+      (*fp)();
+   }
+};
+
+void fun1(){...}
+void fun2(){...}
+
+//Each object of 'Func' class hold a handle to a global function, Such objects are called FUNCTION OBJECTS.
+Func fobj1(&fun1);
+Func fobj2(&fun2);
+
+fobj1.fp();  //error, cannot access private data
+fobj1.call();  //ok
+fobj1();       //fobj1.operator()();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
